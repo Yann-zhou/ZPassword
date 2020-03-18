@@ -1,8 +1,11 @@
-import socket  # 导入 socket 模块
+import socket
+import simplejson
+
 
 s = socket.socket()  # 创建 socket 对象
 s.connect(('192.168.50.82', 8712))
-print(s.recv(1024).decode(encoding='utf8'))
-s.send("连接了".encode('utf8'))
-print(s.recv(1024).decode(encoding='utf8'))
-input("")
+print(s.recv(1024).decode())
+dic = {"user": "def", "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"}
+st = simplejson.dumps(dic)
+s.send(st.encode())
+print(s.recv(1024).decode())

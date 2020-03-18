@@ -33,13 +33,13 @@ def insert(user: str, password: str):
         print('UNIQUE constraint failed: user.user')
 
 
-def select():
+def select(user: str):
     conn = sqlite3.connect(getcwd() + '/MyPass.db')
     c = conn.cursor()
-    cursor = c.execute('SELECT * FROM user')
-    for row in cursor:
-        print(row)
+    cursor = c.execute('SELECT * FROM user WHERE user=\'' + user + '\'')
+    db = cursor.fetchall()
     conn.close()
+    return db
 
 
 def update(userid: str, user: str = None, password: str = None):

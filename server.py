@@ -1,5 +1,8 @@
 import socket
 from threading import Thread
+from time import sleep
+import simplejson
+import compareDatabase
 
 PORT = 8712
 MAX_CLIENT = 5
@@ -28,41 +31,52 @@ def accept_client():
         thread.start()
 
 
+# 消息处理函数
 def message_handle(client):
     """
     消息处理
     """
-    client.sendall("连接服务器成功!".encode(encoding='utf8'))
+    client.sendall("连接服务器成功!".encode())
     while True:
-        bytes = client.recv(1024)
-        print("客户端消息:", client.getpeername(), bytes.decode(encoding='utf8'))
-        if len(bytes) == 0:
+        recv_message = client.recv(1024).decode(encoding="utf8")
+        if len(recv_message) != 0:
+            print(recv_message)
+            dic = simplejson.loads(recv_message)
+            if compareDatabase.compare_password(dic['user'], dic['password']):
+                print('password correct')
+                client.sendall('correct'.encode())
+            else:
+                print('password incorrect')
+                client.sendall('incorrect'.encode())
+        else:
             client.close()
             g_conn_pool.remove(client)  # 删除连接
-            print("Client ")
+            print("Client Disconnect")
             break
 
 
-if __name__ == '__main__':
-    init()
-    thread = Thread(target=accept_client)  # 新开一个线程，用于接收新连接
-    thread.setDaemon(True)
-    thread.start()
-    # 主线程逻辑
-    while True:
-        cmd = input("""--------------------------
-输入1:查看当前在线人数
-输入2:给指定客户端发送消息
-输入3:关闭服务端
-""")
-        if cmd == '1':
-            print("--------------------------")
-            print("当前在线人数：", len(g_conn_pool))
-            for client in g_conn_pool:
-                print(client.getpeername())
-        elif cmd == '2':
-            print("--------------------------")
-            index, msg = input("请输入“索引,消息”的形式：").split(",")
-            g_conn_pool[int(index)].sendall(msg.encode(encoding='utf8'))
-        elif cmd == '3':
-            exit()
+init()
+thread = Thread(target=accept_client)  # 新开一个线程，用于接收新连接
+thread.setDaemon(True)
+thread.start()
+# 主线程逻辑
+while True:
+    sleep(1)
+
+'''while True:
+    cmd = input('--------------------------\n'
+                '输入1:查看当前在线人数\n'
+                '输入2:给指定客户端发送消息\n'
+                '输入3:关闭服务端\n')
+    if cmd == '1':
+        print("--------------------------")
+        print("当前在线人数：", len(g_conn_pool))
+        for client in g_conn_pool:
+            print(client.getpeername())
+    elif cmd == '2':
+        print("--------------------------")
+        index, msg = input("请输入“索引,消息”的形式：").split(",")
+        g_conn_pool[int(index)].sendall(msg.encode(encoding='utf8'))
+    elif cmd == '3':
+        exit()
+'''
