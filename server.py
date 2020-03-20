@@ -2,7 +2,7 @@ import socket
 from threading import Thread
 from time import sleep
 import simplejson
-import compareDatabase
+from database_tool import compareDatabase
 
 PORT = 8712
 MAX_CLIENT = 5
