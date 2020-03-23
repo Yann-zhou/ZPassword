@@ -1,6 +1,8 @@
 from os import getcwd
 import sqlite3
 
+from database_tool import detailTable
+
 
 def create():
     try:
@@ -29,6 +31,7 @@ def insert(user: str, password: str):
         ''')
         conn.commit()
         conn.close()
+        detailTable.create()
         return True
     except sqlite3.IntegrityError:
         return 'UserExists'

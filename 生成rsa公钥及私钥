@@ -1,0 +1,28 @@
+
+        # 产生非对称密钥
+        #print('正在生成非对称密钥')
+        #self.asyKey = rsa.newkeys(2048)
+
+
+        #print(type(self.asyKey))
+        # 公钥和私钥
+        #self.publicKey = self.asyKey[0]
+        #self.privateKey = self.asyKey[1]
+        '''
+        (pubkey, privkey) = rsa.newkeys(2048)
+        pub = pubkey.save_pkcs1()
+        pubfile = open('public.pem', 'bw+')
+        pubfile.write(pub)
+        pubfile.close()
+        pri = privkey.save_pkcs1()
+        prifile = open('private.pem', 'bw+')
+        prifile.write(pri)
+        prifile.close()
+        '''
+        with open('public.pem') as publickfile:
+            p = publickfile.read()
+            self.publicKey = rsa.PublicKey.load_pkcs1(p)
+
+        with open('private.pem') as privatefile:
+            p = privatefile.read()
+            self.privateKey = rsa.PrivateKey.load_pkcs1(p)

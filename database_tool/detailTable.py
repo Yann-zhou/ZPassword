@@ -20,7 +20,7 @@ def create():
             conn.commit()
             num_of_table += 1
         except sqlite3.OperationalError:
-            print('table already exists')
+            pass
     conn.close()
     print(str(num_of_table) + ' of tables have been created.')
 
@@ -41,12 +41,17 @@ def insert(userid: str, domain: str, user: str, password: str):
 
 
 def select(userid: str):
-    conn = sqlite3.connect(getcwd() + '/MyPass.db')
-    c = conn.cursor()
-    cursor = c.execute('SELECT * FROM detail' + userid)
-    for row in cursor:
-        print(row)
-    conn.close()
+    try:
+        conn = sqlite3.connect(getcwd() + '/MyPass.db')
+        c = conn.cursor()
+        cursor = c.execute('SELECT * FROM detail' + userid)
+        result = []
+        for row in cursor:
+            result.append([row[0], row[1], row[2], row[3]])
+        conn.close()
+        return result
+    except:
+        return 'UserHaveNoData'
 
 
 def update(userid: str, original_domain: str, original_user: str, original_password: str, domain: str, user: str, password: str):
@@ -58,10 +63,11 @@ def update(userid: str, original_domain: str, original_user: str, original_passw
         conn.commit()
         #print('Total changes is:', conn.total_changes)
         if conn.total_changes > 0:
+            conn.close()
             return True
         else:
+            conn.close()
             return 'NothingToChange'
-        conn.close()
     except:
         return False
 

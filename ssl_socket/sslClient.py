@@ -1,19 +1,20 @@
 import socket
 import rsa
-import pickle
+import base64
+from Crypto.Cipher import AES
 from cryptography.fernet import Fernet
 import hashlib
 from sslError import AuthenticationError
+import simplejson
 
 
 class Client:
 
     def __init__(self):
-        # 产生非对称密钥
-        self.asyKey = rsa.newkeys(2048)
-        # 公钥和私钥
-        self.publicKey = self.asyKey[0]
-        self.privateKey = self.asyKey[1]
+        # 读取私钥
+        with open('private.pem') as privatefile:
+            p = privatefile.read()
+            self.privateKey = rsa.PrivateKey.load_pkcs1(p)
 
     def link_server(self, addr=('localhost', 8080)):
         # 创建socket通信对象
@@ -22,28 +23,50 @@ class Client:
         # 默认连接服务器地址为本机ip和8080端口
         clientSocket.connect(addr)
 
-        # 向服务器传递公钥，和该公钥字符串化后的sha256值
-        print("正在向服务器传送公钥")
-        sendKey = pickle.dumps(self.publicKey)
-        sendKeySha256 = hashlib.sha256(sendKey).hexdigest()
-        clientSocket.send(pickle.dumps((sendKey, sendKeySha256)))
 
         # 接受服务器传递的密钥并进行解密
-        symKey, symKeySha256 = pickle.loads(clientSocket.recv(1024))
-        if hashlib.sha256(symKey).hexdigest() != symKeySha256:
+        en_aes_key_json = simplejson.loads(clientSocket.recv(1024))
+        en_aes_key = en_aes_key_json['en_aes_key']
+        print('en_aes_key:', en_aes_key)
+        en_aes_key_sha256 = en_aes_key_json['en_aes_key_sha256']
+        if hashlib.sha256(en_aes_key.encode()).hexdigest() != en_aes_key_sha256:
             raise AuthenticationError("密钥被篡改！")
         else:
-            self.symKey = pickle.loads(rsa.decrypt(symKey, self.privateKey))
+            self.aes_key = rsa.decrypt(base64.b64decode(en_aes_key), self.privateKey)
             print("密钥交换完成")
 
+        # 偏移量vi取密钥的前16位
+        aes_iv = self.aes_key[:AES.block_size]
+        # 使用CBC模式加密
+        aes_mode = AES.MODE_CBC
         # 初始化加密对象
-        f = Fernet(self.symKey)
+        cryptor = AES.new(self.aes_key, aes_mode, aes_iv)
 
         while True:
-            sendData = input("输入你要发送的消息：")
-            en_sendData = f.encrypt(sendData.encode())
-            clientSocket.send(en_sendData)
+            # sendData = input("输入你要发送的消息：")
+            json_data = {
+                'signal': 2,
+                'message': ['gvsrehw4w5ha3GW4_@123.com', 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3']
+            }
+            send_data = simplejson.dumps(json_data)
+            input('要发送的消息为：' + str(send_data) + '按任意键继续')
 
-            en_recvData = clientSocket.recv(1024)
-            recvData = f.decrypt(en_recvData).decode()
-            print("接受到服务器传来的消息：{0}".format(recvData))
+            # 对消息进行加密
+            # 补全加密内容到16位
+            length = 16
+            count = len(send_data)
+            if count % length != 0:
+                add = length - (count % length)
+            else:
+                add = 0
+            send_data = send_data + ('\0' * add)
+            # 加密要传送的信息
+            cipher_send_data = cryptor.encrypt(send_data.encode())
+            # 将加密后的信息进行base64编码
+            en_send_data = base64.b64encode(cipher_send_data)
+            clientSocket.send(en_send_data)
+
+            en_recv_data = base64.b64decode(clientSocket.recv(1024))
+            # 解密并去掉消息中的占位符
+            recv_data = simplejson.loads(cryptor.decrypt(en_recv_data).decode().rstrip('\0'))
+            print("接受到服务器传来的消息：{0}".format(recv_data))
