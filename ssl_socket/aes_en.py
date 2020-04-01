@@ -2,18 +2,17 @@ import base64
 from Crypto.Cipher import AES
 
 
-def encrypt(key, iv, instr):
+def encrypt(key, iv, instr='\0'):
     mystr = _pad(instr)
-    cipher = AES.new(key.encode('utf-8'), AES.MODE_CBC, iv.encode('utf-8'))
+    cipher = AES.new(key, AES.MODE_CBC, iv)
     ret = base64.b64encode(cipher.encrypt(mystr))
     return ret
 
 
 def decrypt(key, iv, encrypted_data):
     encrypted_data = base64.b64decode(encrypted_data)
-    cipher = AES.new(key.encode('utf-8'), AES.MODE_CBC, iv.encode('utf-8'))
+    cipher = AES.new(key, AES.MODE_CBC, iv)
     ret = _unpad(cipher.decrypt(encrypted_data))
-    ret = ret.decode(encoding="utf-8")
     return ret
 
 
@@ -29,6 +28,13 @@ def _unpad(s):
 
 def main():
     encryptedData = 'Zrq5Gvyu+GgWCDI5TI6r3g=='
-    mystr = '合肥'
     key = '1234567812345678'
-    iv = '8765432187654321'
+    mystr = key
+    iv = key
+
+    print(encrypt(key, iv, mystr))
+    print(decrypt(key, iv, encryptedData))
+
+
+if __name__ == '__main__':
+    main()

@@ -2,7 +2,6 @@ import socket
 import rsa
 import base64
 from Crypto.Cipher import AES
-from cryptography.fernet import Fernet
 import hashlib
 from sslError import AuthenticationError
 import simplejson
