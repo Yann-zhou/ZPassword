@@ -1,5 +1,6 @@
 from database_tool import userTable
 from database_tool import detailTable
+from ssl_socket import sendMail
 
 '''
 消息处理函数，用来处理服务器接收到的消息
@@ -8,20 +9,27 @@ from database_tool import detailTable
  X    客户端发送公钥    ['公钥']    经公钥加密后的Fernet对称密钥
  1    客户端请求登录    ['用户名', '密码sha256值']    用户不存在或密码错误或登陆成功及数据库内容
  2    客户端请求增加用户    ['用户名', '密码sha256值']    用户已存在或添加成功或添加失败
- 3    客户端请求删除用户    ['用户序列号']    删除成功或删除失败
- 4    客户端请求修改密码    ['用户序列号', '修改前密码sha256', '修改后的密码sha256']    原密码错误或修改成功或修改失败
+ 3    客户端请求删除用户    ['用户名']    删除成功或删除失败
+ 4    客户端请求修改密码    ['用户名', '修改前密码sha256', '修改后的密码sha256']    原密码错误或修改成功或修改失败
  5    客户端请求增加项目    ['用户序列号', 'url', '网站用户名', '网站密码']    添加成功或添加失败
  6    客户端请求删除项目    ['用户序列号', 'url', '网站用户名']    删除成功或删除失败
- 7    客户端请求修改项目    [['用户序列号', 'url', '网站用户名', '网站密码'], ['修改后url', '修改后用户名', '修改后密码']]
- 8    客户端请求查询信息    ['用户序列号']
+ 7    客户端请求修改项目    [['用户序列号', 'url', '网站用户名', '网站密码'], ['修改后url', '修改后用户名', '修改后密码']]    修改成功或修改失败或无修改
+ 8    客户端请求查询信息    ['用户序列号']    用户所有信息列表
+ 9    查询用户是否存在      ['用户名']    用户存在或不存在
+ 10   查询用户ID           ['用户名']    用户ID
 '''
 
 
 def message_handle(signal: int, content: list):
     # 客户端请求登录
     if signal == 1:
-        db = userTable.select(None, content[0])
-        if len(db) == 0:
+        try:
+            db = userTable.select(None, content[0])
+        except:
+            return return_json('UserNotExists')
+        if db is None:
+            return return_json('UserNotExists')
+        elif len(db) == 0:
             return return_json('UserNotExists')
         else:
             if db[2] == content[1]:
@@ -54,9 +62,9 @@ def message_handle(signal: int, content: list):
 
     # 客户端请求修改密码
     elif signal == 4:
-        original_password = userTable.select(content[0], None)
+        original_password = userTable.select(None, content[0])
         if original_password[2] == content[1]:
-            result = userTable.update(content[0], None, content[2])
+            result = userTable.update(None, content[0], content[2])
             if result == 'NothingToChange':
                 return return_json(result)
             else:
@@ -105,6 +113,23 @@ def message_handle(signal: int, content: list):
             return return_json(result)
         else:
             return return_json('QuerySuccess', result)
+
+    # 客户端请求查询用户是否存在
+    elif signal == 9:
+        result = userTable.select(user=content[0])
+        if result is None:
+            result = sendMail.send_mail(content[0])
+            return return_json('SendMailSuccess', [result])
+        else:
+            return return_json('UserExists')
+
+    elif signal == 10:
+        result = userTable.select(user=content[0])
+        if result is None:
+            return 'UserNotExists'
+        else:
+            print('当前用户ID为：', result[0])
+            return result[0]
 
 
 # 用这个函数返回json格式的数据，上方函数返回数据必须调用该函数

@@ -43,12 +43,16 @@ def select(userid: str = None, user: str = None):
     conn = sqlite3.connect(getcwd() + '/MyPass.db')
     c = conn.cursor()
     if userid is None:
+        print('SELECT * FROM user WHERE user=\'' + user + '\'')
         cursor = c.execute('SELECT * FROM user WHERE user=\'' + user + '\'')
     elif user is None:
         cursor = c.execute('SELECT * FROM user WHERE id=\'' + userid + '\'')
     db = cursor.fetchall()
     conn.close()
-    return [db[0][0], db[0][1], db[0][2]]
+    try:
+        return [db[0][0], db[0][1], db[0][2]]
+    except:
+        return None
 
 
 def update(userid: str, user: str = None, password: str = None):
@@ -74,11 +78,11 @@ def update(userid: str, user: str = None, password: str = None):
         return False
 
 
-def delete(userid: str):
+def delete(user: str):
     try:
         conn = sqlite3.connect(getcwd() + '/MyPass.db')
         c = conn.cursor()
-        execute_sentence = 'DELETE FROM user WHERE id=' + userid
+        execute_sentence = 'DELETE FROM user WHERE user=' + user
         c.execute(execute_sentence)
         conn.commit()
         conn.close()

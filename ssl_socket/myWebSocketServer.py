@@ -1,6 +1,6 @@
 import binascii
 import logging
-from websocket_server import WebsocketServer
+from ssl_socket.websocket_server import WebsocketServer
 import base64
 from Crypto.Cipher import AES
 from Crypto import Random
@@ -9,12 +9,21 @@ from Cryptodome.Cipher import PKCS1_OAEP, PKCS1_v1_5
 import hashlib
 import simplejson
 from binascii import b2a_hex, a2b_hex, b2a_base64
-import aes_en
+import ssl_socket.aes_en as aes_en
 import random
+import ssl_socket.messageHandle as messageHandle
+import database_tool.userTable as userTable
+import threading
 
 
-class Server:
+class Server(threading.Thread):
     def __init__(self, port: int):
+        # 多线程
+        threading.Thread.__init__(self)
+        self.port = port
+
+    def run(self):
+        print("开始线程：" + self.name)
         # 老板rsa函数
         # 生成rsa密钥对
         '''(pubkey, privkey) = rsa.newkeys(2048)
@@ -50,45 +59,40 @@ class Server:
         # 使用CBC模式加密
         self.aes_mode = AES.MODE_CBC
 
-        self.server = WebsocketServer(port, host='', loglevel=logging.INFO)
+        self.server = WebsocketServer(self.port, host='', loglevel=logging.INFO)
         self.server.set_fn_new_client(self.new_client)
         self.server.set_fn_client_left(self.client_left)
         self.server.set_fn_message_received(self.message_back)
         self.server.run_forever()
+        print("退出线程：" + self.name)
 
     def new_client(self, client, server):
         # 打印
         print("和客户端{0}建立连接\n目标主机地址为：{1}".format(client['id'], client['address']))
 
-        # 产生用于对称加密的密钥
+        # 产生用于对称加密的密钥,不可放在构造函数中，否则所有客户端会共享同一个密钥
         seed = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         temp = []
         for i in range(32):
             temp.append(random.choice(seed))
         aes_key_de = ''.join(temp)
-        print(aes_key_de)
-        print(aes_key_de[:16])
         # 将上边所产生的32位随机字符串进行编码
         self.aes_key = aes_key_de.encode()
         # 偏移量iv取密钥的前16位
         self.aes_iv = aes_key_de[:16].encode()
         # 下面是用公钥加密对称密钥并传递的过程
-        # 先将aes密钥转换为16进制
+        # 先将aes密钥转换为16进制,因为js端只能接收16进制的密钥
         # 之后对aes密钥进行rsa加密
         # 再用base64编码保证网络传输
         # 最后对密钥进行hash保证其准确性
-        # en_aes_key = base64.b64encode(self.rsa.encrypt(aes_key))
         en_hex_aes_key = str(binascii.b2a_hex(self.aes_key))[2:-1]
-        en_hex_aes_iv = str(binascii.b2a_hex(self.aes_iv))[2:-1]
-        print(en_hex_aes_key)
-        print(en_hex_aes_iv)
         en_aes_key = base64.b64encode(self.rsa.encrypt(en_hex_aes_key.encode()))
         en_aes_key_sha256 = hashlib.sha256(en_aes_key).hexdigest()
         en_aes_key_json = {
             'en_aes_key': en_aes_key,
             'en_aes_key_sha256': en_aes_key_sha256
         }
-        print("正在加密传送密钥")
+        # 发送密钥的密文
         server.send_message(client, simplejson.dumps(en_aes_key_json).encode())
 
     def client_left(self, client, server):
@@ -98,12 +102,16 @@ class Server:
         # 这里的message参数就是客户端传进来的内容
         print("Client(%d) said: %s" % (client['id'], message))
         # 这里可以对message进行各种处理
-        result = "服务器已经收到消息了..." + message
-        plain_text = aes_en.decrypt(self.aes_key, self.aes_iv, message)
-        cipher_text = aes_en.encrypt(self.aes_key, self.aes_iv, "你好，我在。")
-        print('接收到的客户端密文为：' + base64.b64decode(plain_text).decode())
+        plain_text = base64.b64decode(aes_en.decrypt(self.aes_key, self.aes_iv, message)).decode()
+        print('接收到的客户端密文为：' + plain_text)
+        de_plain_text = simplejson.loads(plain_text)
+        reply = messageHandle.message_handle(de_plain_text['signal'], de_plain_text['message'])
+        print('回复给的客户端明文为：', str(reply))
+        if reply['message'] == 'LoginSuccess':
+            client['id'] = messageHandle.message_handle(10, [de_plain_text['message'][0]])
+            print('当前客户端ID为：', client['id'])
+        cipher_text = aes_en.encrypt(self.aes_key, self.aes_iv, str(reply).replace("'", '"'))
         server.send_message(client, cipher_text)
-        print('已发送服务器密文：'+str(cipher_text))
 
     def handle_login(self, text):
-        pass
+        print('有客户端登录了')
