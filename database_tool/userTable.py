@@ -68,7 +68,7 @@ def update(userid: str, user: str = None, password: str = None):
         execute_sentence += 'WHERE id = ' + userid
         c.execute(execute_sentence)
         conn.commit()
-        #print('Total changes is:', conn.total_changes)
+        # print('Total changes is:', conn.total_changes)
         if conn.total_changes:
             return True
         else:
@@ -82,7 +82,7 @@ def delete(user: str):
     try:
         conn = sqlite3.connect(getcwd() + '/MyPass.db')
         c = conn.cursor()
-        execute_sentence = 'DELETE FROM user WHERE user=' + user
+        execute_sentence = 'DELETE FROM user WHERE user=\"' + user + '\"'
         c.execute(execute_sentence)
         conn.commit()
         conn.close()

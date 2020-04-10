@@ -1,30 +1,20 @@
 import binascii
 import logging
-from ssl_socket.websocket_server import WebsocketServer
+from websocket_server import WebsocketServer
 import base64
 from Crypto.Cipher import AES
-from Crypto import Random
 from Cryptodome.PublicKey import RSA
-from Cryptodome.Cipher import PKCS1_OAEP, PKCS1_v1_5
+from Cryptodome.Cipher import PKCS1_v1_5
 import hashlib
 import simplejson
-from binascii import b2a_hex, a2b_hex, b2a_base64
-import ssl_socket.aes_en as aes_en
+import aes_en as aes_en
 import random
-import ssl_socket.messageHandle as messageHandle
-import database_tool.userTable as userTable
-import threading
+import messageHandle as messageHandle
 
 
-class Server(threading.Thread):
+class Server:
     def __init__(self, port: int):
-        # 多线程
-        threading.Thread.__init__(self)
-        self.port = port
-
-    def run(self):
-        print("开始线程：" + self.name)
-        # 老板rsa函数
+        # 老版rsa函数
         # 生成rsa密钥对
         '''(pubkey, privkey) = rsa.newkeys(2048)
         pub = pubkey.save_pkcs1()
@@ -58,13 +48,13 @@ class Server(threading.Thread):
 
         # 使用CBC模式加密
         self.aes_mode = AES.MODE_CBC
+        self.user_auth_key = {}
 
-        self.server = WebsocketServer(self.port, host='', loglevel=logging.INFO)
+        self.server = WebsocketServer(port, host='', loglevel=logging.INFO)
         self.server.set_fn_new_client(self.new_client)
         self.server.set_fn_client_left(self.client_left)
         self.server.set_fn_message_received(self.message_back)
         self.server.run_forever()
-        print("退出线程：" + self.name)
 
     def new_client(self, client, server):
         # 打印
@@ -105,13 +95,15 @@ class Server(threading.Thread):
         plain_text = base64.b64decode(aes_en.decrypt(self.aes_key, self.aes_iv, message)).decode()
         print('接收到的客户端密文为：' + plain_text)
         de_plain_text = simplejson.loads(plain_text)
-        reply = messageHandle.message_handle(de_plain_text['signal'], de_plain_text['message'])
+        reply = messageHandle.message_handle(de_plain_text['signal'], de_plain_text['message'], self.user_auth_key)
         print('回复给的客户端明文为：', str(reply))
         if reply['message'] == 'LoginSuccess':
-            client['id'] = messageHandle.message_handle(10, [de_plain_text['message'][0]])
+            client['id'] = messageHandle.message_handle(10, [de_plain_text['message'][0]], self.user_auth_key)
             print('当前客户端ID为：', client['id'])
+            self.user_auth_key[reply['content'][0]] = client['id']
+            print(self.user_auth_key)
         cipher_text = aes_en.encrypt(self.aes_key, self.aes_iv, str(reply).replace("'", '"'))
         server.send_message(client, cipher_text)
 
     def handle_login(self, text):
-        print('有客户端登录了')
+        pass

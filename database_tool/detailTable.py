@@ -61,7 +61,7 @@ def update(userid: str, original_domain: str, original_user: str, original_passw
         execute_sentence = 'UPDATE detail'+userid+' SET domain=\''+domain+'\', user=\''+user+'\', password=\''+password+'\' WHERE domain=\''+original_domain+'\' AND user=\''+original_user+'\' AND password=\''+original_password+'\''
         c.execute(execute_sentence)
         conn.commit()
-        #print('Total changes is:', conn.total_changes)
+        # print('Total changes is:', conn.total_changes)
         if conn.total_changes > 0:
             conn.close()
             return True
