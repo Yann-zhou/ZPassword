@@ -1,6 +1,6 @@
 from typing import Iterable, List
 
-from .constants import CHECKSUM_LENGTH_WORDS, CUSTOMIZATION_STRING
+from secret_shamir.constants import CHECKSUM_LENGTH_WORDS, CUSTOMIZATION_STRING
 
 
 def _polymod(values: Iterable[int]) -> int:

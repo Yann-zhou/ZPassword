@@ -2,8 +2,9 @@ from typing import Iterable, List, NamedTuple
 
 import attr
 
-from . import rs1024, wordlist
-from .constants import (
+import secret_shamir.rs1024 as rs1024
+import secret_shamir.wordlist as wordlist
+from secret_shamir.constants import (
     ID_EXP_LENGTH_WORDS,
     ITERATION_EXP_LENGTH_BITS,
     METADATA_LENGTH_WORDS,
@@ -11,7 +12,7 @@ from .constants import (
     RADIX,
     RADIX_BITS,
 )
-from .utils import MnemonicError, bits_to_bytes, bits_to_words, int_to_indices
+from secret_shamir.utils import MnemonicError, bits_to_bytes, bits_to_words, int_to_indices
 
 WordIndex = int
 

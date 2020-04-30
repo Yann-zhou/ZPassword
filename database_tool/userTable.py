@@ -11,8 +11,8 @@ def create():
         c.execute('''
                     CREATE TABLE user (
                         id       INTEGER    PRIMARY KEY ASC AUTOINCREMENT,
-                        user     CHAR (50)  UNIQUE ON CONFLICT ROLLBACK,
-                        password CHAR (100) 
+                        user     TEXT (50)  UNIQUE ON CONFLICT ROLLBACK,
+                        password TEXT (100) 
                     );''')
 
         conn.commit()
@@ -43,7 +43,6 @@ def select(userid: str = None, user: str = None):
     conn = sqlite3.connect(getcwd() + '/MyPass.db')
     c = conn.cursor()
     if userid is None:
-        print('SELECT * FROM user WHERE user=\'' + user + '\'')
         cursor = c.execute('SELECT * FROM user WHERE user=\'' + user + '\'')
     elif user is None:
         cursor = c.execute('SELECT * FROM user WHERE id=\'' + userid + '\'')
@@ -78,11 +77,15 @@ def update(userid: str, user: str = None, password: str = None):
         return False
 
 
-def delete(user: str):
+def delete(user: str = None, userid: str = None):
+    execute_sentence = ''
     try:
         conn = sqlite3.connect(getcwd() + '/MyPass.db')
         c = conn.cursor()
-        execute_sentence = 'DELETE FROM user WHERE user=\"' + user + '\"'
+        if userid is None:
+            execute_sentence = 'DELETE FROM user WHERE user=\"' + user + '\"'
+        else:
+            execute_sentence = 'DELETE FROM user WHERE id=' + str(userid)
         c.execute(execute_sentence)
         conn.commit()
         conn.close()

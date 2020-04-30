@@ -7,11 +7,10 @@ import random
 消息处理函数，用来处理服务器接收到的消息
 消息格式是[信号, 消息内容]
 信号    信号含义    消息内容    返回值
- X    客户端发送公钥    ['公钥']    经公钥加密后的Fernet对称密钥
  1    客户端请求登录    ['用户名', '密码sha256值']    用户不存在或密码错误或登陆成功及数据库内容
  2    客户端请求增加用户    ['用户名', '密码sha256值']    用户已存在或添加成功或添加失败
- 3    客户端请求删除用户    ['用户名']    删除成功或删除失败
- 4    客户端请求修改密码    ['用户名', '修改前密码sha256', '修改后的密码sha256']    原密码错误或修改成功或修改失败
+ 3    客户端请求删除用户    ['用户识别码']    删除成功或删除失败
+ 4    客户端请求修改密码    ['用户识别码', '修改前密码sha256', '修改后的密码sha256']    原密码错误或修改成功或修改失败
  5    客户端请求增加项目    ['用户识别码', 'url', '网站用户名', '网站密码']    添加成功或添加失败
  6    客户端请求删除项目    ['用户识别码', 'url', '网站用户名']    删除成功或删除失败
  7    客户端请求修改项目    [['用户识别码', 'url', '网站用户名', '网站密码'], ['修改后url', '修改后用户名', '修改后密码']]    修改成功或修改失败或无修改
@@ -61,9 +60,10 @@ def message_handle(signal: int, content: list, id_dict: dict):
 
     # 客户端请求删除用户
     elif signal == 3:
-        result = userTable.delete(content[0]) and detailTable.delete(str(id_dict[content[1]]))
-        print(userTable.delete(content[0]))
-        print(detailTable.delete(str(id_dict[content[1]])))
+        if content[0] is "":
+            result = userTable.delete(userid=id_dict[content[1]]) and detailTable.delete(str(id_dict[content[1]]))
+        else:
+            result = userTable.delete(content[0]) and detailTable.delete(str(id_dict[content[1]]))
         if result:
             return return_json('DeleteSuccess')
         elif not result:
@@ -137,7 +137,6 @@ def message_handle(signal: int, content: list, id_dict: dict):
         if result is None:
             return 'UserNotExists'
         else:
-            print('当前用户ID为：', result[0])
             return result[0]
 
 

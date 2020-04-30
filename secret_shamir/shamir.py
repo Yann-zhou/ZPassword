@@ -23,8 +23,8 @@ import hmac
 import secrets
 from typing import Dict, Iterable, List, NamedTuple, Sequence, Set, Tuple
 
-from . import cipher
-from .constants import (
+import secret_shamir.cipher as cipher
+from secret_shamir.constants import (
     DIGEST_INDEX,
     DIGEST_LENGTH_BYTES,
     GROUP_PREFIX_LENGTH_WORDS,
@@ -34,8 +34,8 @@ from .constants import (
     MIN_STRENGTH_BITS,
     SECRET_INDEX,
 )
-from .share import Share, ShareSetParameters
-from .utils import MnemonicError, bits_to_bytes
+from secret_shamir.share import Share, ShareSetParameters
+from secret_shamir.utils import MnemonicError, bits_to_bytes
 
 
 class RawShare(NamedTuple):

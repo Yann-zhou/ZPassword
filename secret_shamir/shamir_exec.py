@@ -1,10 +1,10 @@
 import secrets
 from typing import List
-from .shamir import combine_mnemonics, generate_mnemonics
+from secret_shamir.shamir import combine_mnemonics, generate_mnemonics
 
 '''
 create函数使用范例
-from shamir_mnemonic_local import my_shamir as shamir_cli
+from secret_shamir import my_shamir as shamir_cli
 
 temp = shamir_cli.create('3of5', 0, '65190580aaba3b0c674eb266d03cd6fa', 160)
 返回值为所有密钥的list
@@ -21,9 +21,7 @@ def create(
         groups = [(m, n)]
 
     if master_secret is not None:
-        #secret_bytes = bytes.fromhex(master_secret)
-        #secret_bytes = bytes(master_secret, encoding="ascii")
-        secret_bytes = master_secret.encode()
+        secret_bytes = fill_string(master_secret).encode()
     else:
         secret_bytes = secrets.token_bytes(strength // 8)
 
@@ -44,4 +42,15 @@ shamir_cli.recover(my_list)
 def recover(all_mnemonics: List) -> None:
     passphrase_bytes=b''
     master_secret = combine_mnemonics(all_mnemonics, passphrase_bytes)
-    return master_secret.decode()
+    return erase_string(master_secret.decode())
+
+
+def fill_string(string: str):
+    while len(string)<16:
+        string += '\0'
+    return string
+
+
+def erase_string(string: str):
+    string_return = string.replace('\0', '')
+    return string_return

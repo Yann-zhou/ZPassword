@@ -1,12 +1,12 @@
 import hashlib
 
-from .constants import (
+from secret_shamir.constants import (
     BASE_ITERATION_COUNT,
     CUSTOMIZATION_STRING,
     ID_LENGTH_BITS,
     ROUND_COUNT,
 )
-from .utils import bits_to_bytes
+from secret_shamir.utils import bits_to_bytes
 
 
 def _xor(a: bytes, b: bytes) -> bytes:

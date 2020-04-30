@@ -1,8 +1,8 @@
 import os.path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
-from .constants import RADIX
-from .utils import MnemonicError
+from secret_shamir.constants import RADIX
+from secret_shamir.utils import MnemonicError
 
 
 def _load_wordlist() -> Tuple[List[str], Dict[str, int]]:

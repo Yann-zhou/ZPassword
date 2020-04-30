@@ -83,6 +83,7 @@ class Server:
             'en_aes_key_sha256': en_aes_key_sha256
         }
         # 发送密钥的密文
+        print(en_aes_key_json)
         server.send_message(client, simplejson.dumps(en_aes_key_json).encode())
 
     def client_left(self, client, server):
@@ -92,6 +93,8 @@ class Server:
         # 这里的message参数就是客户端传进来的内容
         print("Client(%d) said: %s" % (client['id'], message))
         # 这里可以对message进行各种处理
+        print("aes_key:", self.aes_key)
+        print("aes_iv", self.aes_iv)
         plain_text = base64.b64decode(aes_en.decrypt(self.aes_key, self.aes_iv, message)).decode()
         print('接收到的客户端密文为：' + plain_text)
         de_plain_text = simplejson.loads(plain_text)

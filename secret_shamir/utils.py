@@ -28,7 +28,7 @@ def bits_to_words(n: int) -> int:
     # as long as calls to bits_to_words only happens *after* RADIX_BITS are declared.
     #
     # An alternative is to have a private implementation of bits_to_words in constants
-    from . import constants
+    import secret_shamir.constants as constants
 
     assert hasattr(constants, "RADIX_BITS"), "Declare RADIX_BITS *before* calling this"
 

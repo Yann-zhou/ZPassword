@@ -1,4 +1,4 @@
-from .utils import bits_to_words
+from secret_shamir.utils import bits_to_words
 
 RADIX_BITS = 10
 """The length of the radix in bits."""
@@ -24,7 +24,7 @@ CHECKSUM_LENGTH_WORDS = 3
 DIGEST_LENGTH_BYTES = 4
 """The length of the digest of the shared secret in bytes."""
 
-CUSTOMIZATION_STRING = b"shamir"
+CUSTOMIZATION_STRING = b"secret_shamir"
 """The customization string used in the RS1024 checksum and in the PBKDF2 salt."""
 
 GROUP_PREFIX_LENGTH_WORDS = ID_EXP_LENGTH_WORDS + 1

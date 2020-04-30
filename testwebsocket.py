@@ -1,3 +1,3 @@
-import myWebSocketServer
+import ZWebSocketServer
 
-myWebSocketServer.Server(4200)
+ZWebSocketServer.Server(4200)
